@@ -1,6 +1,6 @@
 # SubRenamer
 
-感谢arition（https://github.com/arition/SubRenamer） 的字幕重命名工具，本fork在原基础修改。
+感谢[arition](https://github.com/arition/SubRenamer) 的字幕重命名工具，本fork在原基础修改。
 
 功能：
 
