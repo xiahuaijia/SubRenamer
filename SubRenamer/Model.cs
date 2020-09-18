@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualBasic;
+using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -122,6 +123,28 @@ namespace SubRenamer
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        /// <summary>
+        /// 简体转繁体
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        public string Gb_Big5_transform(string str)
+        {
+            var resultStr = Strings.StrConv(str, VbStrConv.TraditionalChinese, 0);
+            return resultStr;
+        }
+
+        /// <summary>
+        /// 繁体转简体
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        public string Big5_Gb_Transform(string str)
+        {
+            var resultStr = Strings.StrConv(str, VbStrConv.SimplifiedChinese, 0);
+            return resultStr;
         }
     }
 }

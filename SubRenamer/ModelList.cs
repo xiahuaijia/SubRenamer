@@ -6,10 +6,14 @@ using System.Linq;
 
 namespace SubRenamer
 {
-    public class ModelList 
+    public class ModelList
     {
         public ObservableCollection<Model> Models { get; } = new ObservableCollection<Model>();
 
+        /// <summary>
+        /// 添加原始视频
+        /// </summary>
+        /// <param name="files"></param>
         public void AddOriginalMovie(IEnumerable<string> files)
         {
             var fileList = files.OrderBy(t => t);
@@ -32,6 +36,10 @@ namespace SubRenamer
             while (i < Models.Count) Models.RemoveAt(i);
         }
 
+        /// <summary>
+        /// 添加视频
+        /// </summary>
+        /// <param name="files"></param>
         public void AddMovie(IEnumerable<string> files)
         {
             var fileList = files.OrderBy(t => t);
@@ -54,6 +62,10 @@ namespace SubRenamer
             while (i < Models.Count) Models.RemoveAt(i);
         }
 
+        /// <summary>
+        /// 添加字幕
+        /// </summary>
+        /// <param name="files"></param>
         public void AddSub(IEnumerable<string> files)
         {
             var fileList = files.Select(t => new
@@ -98,6 +110,11 @@ namespace SubRenamer
             while (i < Models.Count) Models.RemoveAt(i);
         }
 
+        /// <summary>
+        /// 拖动文件
+        /// </summary>
+        /// <param name="files"></param>
+        /// <param name="eatSushi"></param>
         public void AddDropFiles(IEnumerable<string> files, bool eatSushi)
         {
             var originalMovieList = new List<string>();

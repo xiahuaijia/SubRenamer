@@ -23,6 +23,9 @@ namespace SubRenamer
         public ModelList ModelList { get; } = new ModelList();
         private bool _eatSushi;
         private bool _copySub;
+        private bool _GbToBig5;
+        private bool _Big5ToGb;
+
         private Logger Logger { get; } = LogManager.GetCurrentClassLogger();
         private Logger SushiLogger { get; } = LogManager.GetLogger("Sushi");
 
@@ -54,6 +57,33 @@ namespace SubRenamer
             }
         }
 
+        public bool GbToBig5
+        {
+            get { return _GbToBig5; }
+            set
+            {
+                _GbToBig5 = value;
+                _Big5ToGb = !_GbToBig5;
+
+                OnPropertyChanged("GbToBig5");
+                OnPropertyChanged("Big5ToGb");
+            }
+        }
+
+        public bool Big5ToGb
+        {
+            get { return _Big5ToGb; }
+            set
+            {
+                _Big5ToGb = value;
+                _GbToBig5 = !_Big5ToGb;
+
+                OnPropertyChanged("GbToBig5");
+                OnPropertyChanged("Big5ToGb");
+            }
+        }
+
+
         public MainWindow()
         {
             DataContext = this;
@@ -62,6 +92,11 @@ namespace SubRenamer
             GridView.Columns.RemoveAt(0);
         }
 
+        /// <summary>
+        /// 选择原始视频（用于sushi自动调轴）
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BtnSelectOriginalMovie_OnClick(object sender, RoutedEventArgs e)
         {
             var selectFile = new OpenFileDialog
@@ -75,6 +110,11 @@ namespace SubRenamer
             }
         }
 
+        /// <summary>
+        /// 选择视频
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BtnSelectMovie_OnClick(object sender, RoutedEventArgs e)
         {
             var selectFile = new OpenFileDialog
@@ -88,6 +128,11 @@ namespace SubRenamer
             }
         }
 
+        /// <summary>
+        /// 选择字幕
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BtnSelectSub_OnClick(object sender, RoutedEventArgs e)
         {
             var selectFile = new OpenFileDialog
@@ -101,6 +146,11 @@ namespace SubRenamer
             }
         }
 
+        /// <summary>
+        /// 执行重命名
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void BtnRename_OnClick(object sender, RoutedEventArgs e)
         {
             ProgressDialogController controller = null;
@@ -116,47 +166,69 @@ namespace SubRenamer
                 if (EatSushi) controller?.SetMessage($"正在处理第{i + 1}个字幕");
                 Logger.Info($"正在处理第{i + 1}个字幕");
                 var model = ModelList.Models[i];
+
+                var file_name = Path.GetFileName(model.SubFileName);
                 try
                 {
-                    model.GenerateRenameSubFiles(CopySub);
-                    for (var j = 0; j < model.SubFiles.Count; j++)
+                    //创建重命名文件
+                    if (!string.IsNullOrEmpty(model.MovieFileName))
                     {
-                        if (!EatSushi)
+                        model.GenerateRenameSubFiles(CopySub);
+
+                        //sushi自动调轴
+                        for (var j = 0; j < model.SubFiles.Count; j++)
                         {
-                            if (CopySub) model.SubFiles[j].CopyTo(model.RenamedSubFiles[j].FullName);
-                            else model.SubFiles[j].MoveTo(model.RenamedSubFiles[j].FullName);
-                        }
-                        else
-                        {
-                            var process = new Process
+                            if (!EatSushi)
                             {
-                                StartInfo = new ProcessStartInfo
+                                if (CopySub) model.SubFiles[j].CopyTo(model.RenamedSubFiles[j].FullName);
+                                else model.SubFiles[j].MoveTo(model.RenamedSubFiles[j].FullName);
+                            }
+                            else
+                            {
+                                var process = new Process
                                 {
-                                    FileName = Path.Combine("Sushi", "sushi.exe"),
-                                    Arguments = $"--src \"{model.OriginalMovieFile.FullName}\" " +
-                                                $"--dst \"{model.MovieFile.FullName}\" " +
-                                                $"--script \"{model.SubFiles[j].FullName}\" " +
-                                                $"-o \"{model.RenamedSubFiles[j].FullName}\"",
-                                    UseShellExecute = false,
-                                    CreateNoWindow = true,
-                                    //RedirectStandardOutput = true,
-                                    //RedirectStandardError = true
-                                }
-                            };
-                            //process.OutputDataReceived += (senderx, ex) => SushiLogger.Info(ex.Data);
-                            //process.ErrorDataReceived += (senderx, ex) => SushiLogger.Info(ex.Data);
-                            process.Start();
-                            await Task.Run(() => process.WaitForExit());
-                            if (!CopySub) model.SubFiles[j].Delete();
+                                    StartInfo = new ProcessStartInfo
+                                    {
+                                        FileName = Path.Combine("Sushi", "sushi.exe"),
+                                        Arguments = $"--src \"{model.OriginalMovieFile.FullName}\" " +
+                                                    $"--dst \"{model.MovieFile.FullName}\" " +
+                                                    $"--script \"{model.SubFiles[j].FullName}\" " +
+                                                    $"-o \"{model.RenamedSubFiles[j].FullName}\"",
+                                        UseShellExecute = false,
+                                        CreateNoWindow = true,
+                                        //RedirectStandardOutput = true,
+                                        //RedirectStandardError = true
+                                    }
+                                };
+                                //process.OutputDataReceived += (senderx, ex) => SushiLogger.Info(ex.Data);
+                                //process.ErrorDataReceived += (senderx, ex) => SushiLogger.Info(ex.Data);
+                                process.Start();
+                                await Task.Run(() => process.WaitForExit());
+                                if (!CopySub) model.SubFiles[j].Delete();
+                            }
                         }
+
+                        //使用新路径进行，简繁体转换
+                        if (Big5ToGb || Big5ToGb)
+                        {
+                            for (int k = 0; k < model.RenamedSubFiles.Count; k++)
+                            {
+                                TransformText(model, model.RenamedSubFiles[k].FullName);
+
+                            }
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("请选择对应的原视频。");
                     }
                 }
                 catch (Exception ex)
                 {
                     sb.AppendLine($"第{i + 1}个字幕出现错误：{ex.Message}");
-                    Logger.Error(ex, $"第{i + 1}个字幕出现错误");
+                    Logger.Error(ex, $"第{i + 1}个字幕出现错误：字幕名称【{file_name}】，错误信息【{ex.Message}】");
                 }
-                if (EatSushi) controller?.SetProgress((i + 1d)/ModelList.Models.Count);
+                if (EatSushi) controller?.SetProgress((i + 1d) / ModelList.Models.Count);
             }
             if (EatSushi && controller != null) await controller.CloseAsync();
             Logger.Info("重命名完成");
@@ -172,11 +244,41 @@ namespace SubRenamer
             ModelList.Models.Clear();
         }
 
+        /// <summary>
+        /// 简繁体转换
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="file_path"></param>
+        private void TransformText(Model model, string file_path)
+        {
+            var all_text = File.ReadAllText(file_path, Encoding.Default);
+            if (GbToBig5)
+            {
+                all_text = model.Gb_Big5_transform(all_text);
+            }
+            else
+            {
+                all_text = model.Big5_Gb_Transform(all_text);
+            }
+
+            File.WriteAllText(file_path, all_text, Encoding.Default);
+        }
+
+        /// <summary>
+        /// 清空列表
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BtnClearList_OnClick(object sender, RoutedEventArgs e)
         {
             ModelList.Models.Clear();
         }
 
+        /// <summary>
+        /// 界面表格拖动
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ListInfo_OnDrop(object sender, DragEventArgs e)
         {
             if (e.Data.GetData(DataFormats.FileDrop) is string[] files)
@@ -189,6 +291,51 @@ namespace SubRenamer
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        /// <summary>
+        /// 简繁体转换
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void BtnTransform_Click(object sender, RoutedEventArgs e)
+        {
+            if (!GbToBig5 && !Big5ToGb)
+            {
+                MessageBox.Show("请选择简繁体转换类型。");
+                return;
+            }
+
+            var sb = new StringBuilder();
+            for (var i = 0; i < ModelList.Models.Count; i++)
+            {
+                var model = ModelList.Models[i];
+                var file_name = Path.GetFileName(model.SubFileName);
+                try
+                {
+                    //使用新路径进行，简繁体转换
+                    for (int k = 0; k < model.SubFiles.Count; k++)
+                    {
+                        TransformText(model, model.SubFiles[k].FullName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    sb.AppendLine($"第{i + 1}个字幕出现错误：{ex.Message}");
+                    Logger.Error(ex, $"第{i + 1}个字幕出现错误：字幕名称【{file_name}】，错误信息【{ex.Message}】");
+                }
+            }
+
+            var message = sb.ToString();
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                await this.ShowMessageAsync("成功", "简繁体转换成功");
+            }
+            else
+            {
+                await this.ShowMessageAsync("错误", message);
+            }
+            ModelList.Models.Clear();
         }
     }
 }
