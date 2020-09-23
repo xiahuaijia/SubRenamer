@@ -1,12 +1,15 @@
 # SubRenamer
 
-字幕重命名工具。
+感谢[arition](https://github.com/arition/SubRenamer) 的字幕重命名工具，本fork在原基础修改。
+
+功能：
 
 支持使用[Sushi](https://github.com/tp7/Sushi)来自动进行字幕调轴。
 
-## Download
+支持文件重命名后字幕文件拷贝至视频文件夹。
 
-[https://github.com/arition/SubRenamer/releases/latest](https://github.com/arition/SubRenamer/releases/latest)
+支持简繁体转换。
+
 
 ## License
 
