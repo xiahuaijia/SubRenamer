@@ -9,34 +9,54 @@
         BorderBrush="{DynamicResource AccentColorBrush}"
         BorderThickness="1"
         WindowStartupLocation="CenterScreen"
-        Title="SubRenamer" Height="450" Width="725" FontFamily="{DynamicResource DefaultFont}">
+        Title="SubRenamer" Height="450" Width="800" FontFamily="{DynamicResource DefaultFont}">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
     <DockPanel LastChildFill="True">
-        <StackPanel DockPanel.Dock="Bottom">
-            <WrapPanel Margin="0,5" HorizontalAlignment="Left">
+        <Grid DockPanel.Dock="Bottom">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Margin="0,5" HorizontalAlignment="Left" Orientation="Horizontal">
                 <CheckBox Content="复制字幕到视频目录" Margin="10,0" IsChecked="{Binding CopySub, Mode=TwoWay}"/>
-                <CheckBox Content="使用sushi自动调轴" Margin="10,0" IsChecked="{Binding EatSushi, Mode=TwoWay}"/>
+                <CheckBox Content="使用sushi自动调轴（utf8且只支持srt和ass格式）" Margin="10,0" IsChecked="{Binding EatSushi, Mode=TwoWay}"/>
                 <CheckBox Content="简=>繁" Margin="10,0" IsChecked="{Binding GbToBig5, Mode=TwoWay}"/>
                 <CheckBox Content="繁=>简" Margin="10,0" IsChecked="{Binding Big5ToGb, Mode=TwoWay}"/>
-            </WrapPanel>
-            <WrapPanel Margin="0,5" HorizontalAlignment="Left">
-                <WrapPanel.Resources>
+                <ComboBox Name="cbtoutf"  Margin="0 0 5 0" Width="98">
+                    <ComboBoxItem Content="转ANSI"/>
+                    <ComboBoxItem Content="转UTF-8"/>
+                    <ComboBoxItem Content="转GB2312" Selector.IsSelected="True"/>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel  Grid.Row="1" Margin="0,5" HorizontalAlignment="Left" Orientation="Horizontal">
+                <StackPanel.Resources>
                     <ResourceDictionary>
                         <ResourceDictionary.MergedDictionaries>
                             <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/FlatButton.xaml" />
                         </ResourceDictionary.MergedDictionaries>
                     </ResourceDictionary>
-                </WrapPanel.Resources>
+                </StackPanel.Resources>
                 <Button x:Name="BtnSelectOriginalMovie" Content="选择原视频" Width="100" Margin="5,0" Click="BtnSelectOriginalMovie_OnClick" Visibility="{Binding Path=EatSushi, Converter={StaticResource BoolToVis}, Mode=TwoWay}"/>
                 <Button x:Name="BtnSelectMovie" Content="选择视频" Width="100" Margin="5,0" Click="BtnSelectMovie_OnClick"/>
                 <Button x:Name="BtnSelectSub" Content="选择字幕" Width="100" Margin="5,0" Click="BtnSelectSub_OnClick"/>
                 <Button x:Name="BtnRename" Content="执行重命名" Width="100" Margin="5,0" Click="BtnRename_OnClick"/>
                 <Button x:Name="BtnTransform" Content="简繁体转换" Width="100" Margin="5,0" Click="BtnTransform_Click"/>
                 <Button x:Name="BtnClearList" Content="清空列表" Width="100" Margin="5,0" Click="BtnClearList_OnClick"/>
-            </WrapPanel>
-        </StackPanel>
+            </StackPanel>
+            <StackPanel  Grid.Row="1" HorizontalAlignment="Right" Orientation="Horizontal">
+                <StackPanel.Resources>
+                    <ResourceDictionary>
+                        <ResourceDictionary.MergedDictionaries>
+                            <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/FlatButton.xaml" />
+                        </ResourceDictionary.MergedDictionaries>
+                    </ResourceDictionary>
+                </StackPanel.Resources>
+                <Button x:Name="BtnMeasurementConverter" Content="高级处理" Margin="0,5" Click="BtnMeasurementConverter_Click"/>
+            </StackPanel>
+        </Grid>
+
         <ListView x:Name="ListInfo" 
                   ItemsSource="{Binding Path=ModelList.Models}" 
                   ScrollViewer.CanContentScroll="True" 

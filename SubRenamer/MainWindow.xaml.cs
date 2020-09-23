@@ -25,6 +25,8 @@ namespace SubRenamer
         private bool _copySub;
         private bool _GbToBig5;
         private bool _Big5ToGb;
+        private bool _IsMoveSubTime;
+
 
         private Logger Logger { get; } = LogManager.GetCurrentClassLogger();
         private Logger SushiLogger { get; } = LogManager.GetLogger("Sushi");
@@ -83,6 +85,15 @@ namespace SubRenamer
             }
         }
 
+        public bool IsMoveSubTime
+        {
+            get { return _IsMoveSubTime; }
+            set
+            {
+                _IsMoveSubTime = value;
+                OnPropertyChanged("IsMoveSubTime");
+            }
+        }
 
         public MainWindow()
         {
@@ -185,6 +196,9 @@ namespace SubRenamer
                             }
                             else
                             {
+
+                                //1、文件必须是UTF-8
+                                //2、只支持srt或者ass格式
                                 var process = new Process
                                 {
                                     StartInfo = new ProcessStartInfo
@@ -205,16 +219,6 @@ namespace SubRenamer
                                 process.Start();
                                 await Task.Run(() => process.WaitForExit());
                                 if (!CopySub) model.SubFiles[j].Delete();
-                            }
-                        }
-
-                        //使用新路径进行，简繁体转换
-                        if (Big5ToGb || Big5ToGb)
-                        {
-                            for (int k = 0; k < model.RenamedSubFiles.Count; k++)
-                            {
-                                TransformText(model, model.RenamedSubFiles[k].FullName);
-
                             }
                         }
                     }
@@ -249,7 +253,7 @@ namespace SubRenamer
         /// </summary>
         /// <param name="model"></param>
         /// <param name="file_path"></param>
-        private void TransformText(Model model, string file_path)
+        private void TransformText(Model model, string file_path, Encoding encoding)
         {
             var all_text = File.ReadAllText(file_path, Encoding.Default);
             if (GbToBig5)
@@ -261,7 +265,7 @@ namespace SubRenamer
                 all_text = model.Big5_Gb_Transform(all_text);
             }
 
-            File.WriteAllText(file_path, all_text, Encoding.Default);
+            File.WriteAllText(file_path, all_text, encoding);
         }
 
         /// <summary>
@@ -306,6 +310,21 @@ namespace SubRenamer
                 return;
             }
 
+            var str_encoded = this.cbtoutf.Text.ToString();
+            Encoding encoding = Encoding.Default;
+            if (str_encoded.Contains("ANSI"))
+            {
+                encoding = Encoding.Default;
+            }
+            else if (str_encoded.Contains("UTF-8"))
+            {
+                encoding = Encoding.UTF8;
+            }
+            else if (str_encoded.Contains("GB2312"))
+            {
+                encoding = Encoding.GetEncoding("GB2312");
+            }
+
             var sb = new StringBuilder();
             for (var i = 0; i < ModelList.Models.Count; i++)
             {
@@ -316,7 +335,7 @@ namespace SubRenamer
                     //使用新路径进行，简繁体转换
                     for (int k = 0; k < model.SubFiles.Count; k++)
                     {
-                        TransformText(model, model.SubFiles[k].FullName);
+                        TransformText(model, model.SubFiles[k].FullName, encoding);
                     }
                 }
                 catch (Exception ex)
@@ -336,6 +355,21 @@ namespace SubRenamer
                 await this.ShowMessageAsync("错误", message);
             }
             ModelList.Models.Clear();
+        }
+
+        /// <summary>
+        /// 批量转换
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnMeasurementConverter_Click(object sender, RoutedEventArgs e)
+        {
+            ProcessStartInfo info = new ProcessStartInfo();
+            info.FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SubtitleEdit/SubtitleEdit.exe");
+            info.Arguments = "-b";
+            info.WindowStyle = ProcessWindowStyle.Normal;
+            Process pro = Process.Start(info);
+            pro.WaitForExit();
         }
     }
 }
