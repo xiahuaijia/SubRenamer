@@ -22,13 +22,18 @@
             <StackPanel Grid.Row="0" Margin="0,5" HorizontalAlignment="Left" Orientation="Horizontal">
                 <CheckBox Content="复制字幕到视频目录" Margin="10,0" IsChecked="{Binding CopySub, Mode=TwoWay}"/>
                 <CheckBox Content="使用sushi自动调轴（utf8且只支持srt和ass格式）" Margin="10,0" IsChecked="{Binding EatSushi, Mode=TwoWay}"/>
-                <CheckBox Content="简=>繁" Margin="10,0" IsChecked="{Binding GbToBig5, Mode=TwoWay}"/>
-                <CheckBox Content="繁=>简" Margin="10,0" IsChecked="{Binding Big5ToGb, Mode=TwoWay}"/>
-                <ComboBox Name="cbtoutf"  Margin="0 0 5 0" Width="98">
-                    <ComboBoxItem Content="转ANSI"/>
-                    <ComboBoxItem Content="转UTF-8"/>
-                    <ComboBoxItem Content="转GB2312" Selector.IsSelected="True"/>
-                </ComboBox>
+
+                <Border BorderThickness="1" BorderBrush="LightGray">
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox Content="简=>繁" Margin="10,0" IsChecked="{Binding GbToBig5, Mode=TwoWay}"/>
+                        <CheckBox Content="繁=>简" Margin="10,0" IsChecked="{Binding Big5ToGb, Mode=TwoWay}"/>
+                        <ComboBox Name="cbtoutf"  Margin="0" Width="98">
+                            <ComboBoxItem Content="转ANSI"/>
+                            <ComboBoxItem Content="转UTF-8"/>
+                            <ComboBoxItem Content="转GB2312" Selector.IsSelected="True"/>
+                        </ComboBox>
+                    </StackPanel>
+                </Border>
             </StackPanel>
             <StackPanel  Grid.Row="1" Margin="0,5" HorizontalAlignment="Left" Orientation="Horizontal">
                 <StackPanel.Resources>
