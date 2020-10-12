@@ -24,7 +24,7 @@ namespace SubRenamer
         private bool _eatSushi;
         private bool _copySub;
         private bool _GbToBig5;
-        private bool _Big5ToGb;
+        private bool _Big5ToGb = true;
         private bool _IsMoveSubTime;
 
 
@@ -167,10 +167,29 @@ namespace SubRenamer
             ProgressDialogController controller = null;
             if (EatSushi)
             {
+                #region 判断文件是否是UTF-8
+                for (var i = 0; i < ModelList.Models.Count; i++)
+                {
+                    var model = ModelList.Models[i];
+                    for (var j = 0; j < model.SubFiles.Count; j++)
+                    {
+                        var encoding_now = Utils.GetBytesEncoding(model.SubFiles[j].FullName);
+                        if (encoding_now.EncodingName != Encoding.UTF8.EncodingName)
+                        {
+                            string sub_str = Path.GetFileName(model.SubFiles[j].FullName);
+                            await this.ShowMessageAsync("错误", $"自动调轴只支持UTF8格式的字幕，当前字幕：{sub_str}");
+
+                            return;
+                        }
+                    }
+                }
+                #endregion
+
                 controller = await this.ShowProgressAsync("正在处理", "正在处理第1个字幕");
                 controller.Minimum = 0;
                 controller.Maximum = 1;
             }
+
             var sb = new StringBuilder();
             for (var i = 0; i < ModelList.Models.Count; i++)
             {
@@ -191,34 +210,49 @@ namespace SubRenamer
                         {
                             if (!EatSushi)
                             {
-                                if (CopySub) model.SubFiles[j].CopyTo(model.RenamedSubFiles[j].FullName);
-                                else model.SubFiles[j].MoveTo(model.RenamedSubFiles[j].FullName);
+                                if (CopySub)
+                                {
+                                    model.SubFiles[j].CopyTo(model.RenamedSubFiles[j].FullName);
+                                }
+                                else
+                                {
+                                    model.SubFiles[j].MoveTo(model.RenamedSubFiles[j].FullName);
+                                }
                             }
                             else
                             {
+                                #region sushi自动调轴，只支持UTF-8，只支持srt或者ass格式
 
-                                //1、文件必须是UTF-8
-                                //2、只支持srt或者ass格式
+                                //sushi会在新视频文件所在位置，生成格式为：XXXXXXXXX.sushi.ass的字幕文件
                                 var process = new Process
                                 {
                                     StartInfo = new ProcessStartInfo
                                     {
                                         FileName = Path.Combine("Sushi", "sushi.exe"),
-                                        Arguments = $"--src \"{model.OriginalMovieFile.FullName}\" " +
-                                                    $"--dst \"{model.MovieFile.FullName}\" " +
-                                                    $"--script \"{model.SubFiles[j].FullName}\" " +
-                                                    $"-o \"{model.RenamedSubFiles[j].FullName}\"",
-                                        UseShellExecute = false,
-                                        CreateNoWindow = true,
-                                        //RedirectStandardOutput = true,
-                                        //RedirectStandardError = true
+                                        Arguments = $"--src \"{model.OriginalMovieFile.FullName}\" "
+                                            + $"--dst \"{model.MovieFile.FullName}\" "
+                                            + $"--script \"{model.SubFiles[j].FullName}\" ",
+                                        //+ $"-o \"{model.RenamedSubFiles[j].FullName}\"",
+                                        UseShellExecute = false,//不用Shell启动
+                                        CreateNoWindow = false,//输出DOS窗口
+                                        //RedirectStandardInput = true,//重定向输入
+                                        //RedirectStandardOutput = true,//重定向输出
+                                        //RedirectStandardError = true,//不显示窗口
                                     }
                                 };
+
                                 //process.OutputDataReceived += (senderx, ex) => SushiLogger.Info(ex.Data);
                                 //process.ErrorDataReceived += (senderx, ex) => SushiLogger.Info(ex.Data);
+
                                 process.Start();
-                                await Task.Run(() => process.WaitForExit());
-                                if (!CopySub) model.SubFiles[j].Delete();
+                                await Task.Run(() =>
+                                {
+                                    process.WaitForExit();
+                                });
+                                #endregion
+
+                                //删除源文件
+                                //if (!CopySub) model.SubFiles[j].Delete();
                             }
                         }
                     }
@@ -234,7 +268,9 @@ namespace SubRenamer
                 }
                 if (EatSushi) controller?.SetProgress((i + 1d) / ModelList.Models.Count);
             }
+
             if (EatSushi && controller != null) await controller.CloseAsync();
+
             Logger.Info("重命名完成");
             var message = sb.ToString();
             if (string.IsNullOrWhiteSpace(message))

@@ -29,8 +29,8 @@
                         <CheckBox Content="繁=>简" Margin="10,0" IsChecked="{Binding Big5ToGb, Mode=TwoWay}"/>
                         <ComboBox Name="cbtoutf"  Margin="0" Width="98">
                             <ComboBoxItem Content="转ANSI"/>
-                            <ComboBoxItem Content="转UTF-8"/>
-                            <ComboBoxItem Content="转GB2312" Selector.IsSelected="True"/>
+                            <ComboBoxItem Content="转UTF-8" Selector.IsSelected="True"/>
+                            <ComboBoxItem Content="转GB2312"/>
                         </ComboBox>
                     </StackPanel>
                 </Border>
