@@ -16,9 +16,10 @@ namespace SubRenamer
         /// <param name="files"></param>
         public void AddOriginalMovie(IEnumerable<string> files)
         {
-            var fileList = files.OrderBy(t => t);
+            var fileList_comparer = files.OrderBy(n => n, new OrdinalComparer());
+
             var i = 0;
-            foreach (var selectFileFileName in fileList)
+            foreach (var selectFileFileName in fileList_comparer)
             {
                 if (i == Models.Count)
                 {
@@ -42,9 +43,10 @@ namespace SubRenamer
         /// <param name="files"></param>
         public void AddMovie(IEnumerable<string> files)
         {
-            var fileList = files.OrderBy(t => t);
+            var fileList_comparer = files.OrderBy(n => n, new OrdinalComparer());
+
             var i = 0;
-            foreach (var selectFileFileName in fileList)
+            foreach (var selectFileFileName in fileList_comparer)
             {
                 if (i == Models.Count)
                 {
@@ -71,20 +73,18 @@ namespace SubRenamer
             var fileList = files.Select(t => new
             {
                 file = new FileInfo(t),
-                name = new FileInfo(t).Name
-            }).Select(t => new
-            {
-                t.file,
-                t.name,
-                nameOnly = t.name.Substring(0,
-                    t.name.Substring(t.name.Length - 15 >= 0 ? t.name.Length - 15 : 0)
-                        .IndexOf(".", StringComparison.Ordinal) + (t.name.Length - 15 >= 0 ? t.name.Length - 15 : 0))
-            }).OrderBy(t => t.nameOnly).ToList();
+                name = new FileInfo(t).Name,
+                nameOnly = Path.GetFileNameWithoutExtension(t)
+            })
+            //.OrderBy(t => t.file.FullName)
+            .ToList();
 
             var i = -1;
             var lastSubNameOnly = "";
 
-            foreach (var selectFileFileName in fileList)
+            var fileList_comparer = fileList.OrderBy(n => n.name, new OrdinalComparer());
+
+            foreach (var selectFileFileName in fileList_comparer)
             {
                 if (lastSubNameOnly != selectFileFileName.nameOnly)
                 {
@@ -120,6 +120,7 @@ namespace SubRenamer
             var originalMovieList = new List<string>();
             var movieList = new List<string>();
             var subList = new List<string>();
+
             foreach (var file in files)
             {
                 var extension = new FileInfo(file).Extension.ToLower();
@@ -128,6 +129,7 @@ namespace SubRenamer
                     case ".mp4":
                     case ".mkv":
                     case ".m2ts":
+                    case ".avi":
                         if (!eatSushi || movieList.Count == 0)
                         {
                             movieList.Add(file);
@@ -148,6 +150,7 @@ namespace SubRenamer
                         break;
                 }
             }
+
             if (subList.Count > 0) AddSub(subList);
             if (eatSushi)
             {

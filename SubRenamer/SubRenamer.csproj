@@ -93,6 +93,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ModelList.cs" />
+    <Compile Include="OrdinalComparer.cs" />
     <Compile Include="Utils.cs" />
     <Page Include="Fonts.xaml">
       <SubType>Designer</SubType>
