@@ -6,36 +6,28 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
-namespace SubRenamer
-{
-    public class Model : INotifyPropertyChanged
-    {
+namespace SubRenamer {
+    public class Model : INotifyPropertyChanged {
         private FileInfo _movieFile;
 
-        public FileInfo MovieFile
-        {
+        public FileInfo MovieFile {
             get => _movieFile;
-            set
-            {
+            set {
                 _movieFile = value;
                 OnPropertyChanged("MovieFileName");
-                try
-                {
+                try {
                     GenerateRenameSubFiles();
                 }
-                catch
-                {
+                catch {
                     // ignored
                 }
             }
         }
         private FileInfo _originalMovieFile;
 
-        public FileInfo OriginalMovieFile
-        {
+        public FileInfo OriginalMovieFile {
             get => _originalMovieFile;
-            set
-            {
+            set {
                 _originalMovieFile = value;
                 OnPropertyChanged("OriginalMovieFileName");
             }
@@ -50,20 +42,15 @@ namespace SubRenamer
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public Model()
-        {
-            SubFiles.CollectionChanged += (e, o) =>
-            {
+        public Model() {
+            SubFiles.CollectionChanged += (e, o) => {
                 OnPropertyChanged("SubFileName");
-                switch (o.Action)
-                {
+                switch (o.Action) {
                     case NotifyCollectionChangedAction.Add:
-                        try
-                        {
+                        try {
                             GenerateRenameSubFiles(o.NewStartingIndex);
                         }
-                        catch
-                        {
+                        catch {
                             // ignored
                         }
                         break;
@@ -77,51 +64,38 @@ namespace SubRenamer
             RenamedSubFiles.CollectionChanged += (e, o) => OnPropertyChanged("RenamedSubFileName");
         }
 
-        public virtual void GenerateRenameSubFiles(int index, bool copyToMovieLocation = false)
-        {
+        public virtual void GenerateRenameSubFiles(int index, bool copyToMovieLocation = false) {
             var subFileInfo = SubFiles[index];
             var fileName = MovieFileName.Substring(0, MovieFileName.LastIndexOf(".", StringComparison.Ordinal));
             var extension = subFileInfo.Name.Substring(
                 subFileInfo.Name.Substring(subFileInfo.Name.Length - 15 >= 0 ? subFileInfo.Name.Length - 15 : 0)
                     .IndexOf(".", StringComparison.Ordinal) +
                 (subFileInfo.Name.Length - 15 >= 0 ? subFileInfo.Name.Length - 15 : 0));
-            if (copyToMovieLocation)
-            {
-                if (MovieFile.Directory != null)
-                {
+            if (copyToMovieLocation) {
+                if (MovieFile.Directory != null) {
                     var path = Path.Combine(MovieFile.Directory.FullName, fileName + extension);
                     RenamedSubFiles.Insert(index, new FileInfo(path));
-                }
-                else
-                {
+                } else {
                     throw new FileNotFoundException("视频文件不存在", MovieFile.FullName);
                 }
-            }
-            else
-            {
-                if (subFileInfo.Directory != null)
-                {
+            } else {
+                if (subFileInfo.Directory != null) {
                     var path = Path.Combine(subFileInfo.Directory.FullName, fileName + extension);
                     RenamedSubFiles.Insert(index, new FileInfo(path));
-                }
-                else
-                {
+                } else {
                     throw new FileNotFoundException("字幕文件不存在", subFileInfo.FullName);
                 }
             }
         }
 
-        public virtual void GenerateRenameSubFiles(bool copyToMovieLocation = false)
-        {
+        public virtual void GenerateRenameSubFiles(bool copyToMovieLocation = false) {
             RenamedSubFiles.Clear();
-            for (var i = 0; i < SubFiles.Count; i++)
-            {
+            for (var i = 0; i < SubFiles.Count; i++) {
                 GenerateRenameSubFiles(i, copyToMovieLocation);
             }
         }
 
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
+        protected virtual void OnPropertyChanged(string propertyName) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
@@ -130,8 +104,7 @@ namespace SubRenamer
         /// </summary>
         /// <param name="str"></param>
         /// <returns></returns>
-        public string Gb_Big5_transform(string str)
-        {
+        public string Gb_Big5_transform(string str) {
             var resultStr = Strings.StrConv(str, VbStrConv.TraditionalChinese, 0);
             return resultStr;
         }
@@ -141,8 +114,7 @@ namespace SubRenamer
         /// </summary>
         /// <param name="str"></param>
         /// <returns></returns>
-        public string Big5_Gb_Transform(string str)
-        {
+        public string Big5_Gb_Transform(string str) {
             var resultStr = Strings.StrConv(str, VbStrConv.SimplifiedChinese, 0);
             return resultStr;
         }
